@@ -103,8 +103,10 @@ def select_pm25_from_db():
         return datas,max_date,countys
     except Exception as e:
         print(f"錯誤訊息:{e}")
+        return [], "無資料", []
     finally:
         close_db()
+
 
 def get_pm25_avg_from_db():
     try:
