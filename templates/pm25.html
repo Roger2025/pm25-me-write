@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>pm25</title>
+    <link rel="stylesheet" href="static/style.css" />
+
+    <script src="https://cdn.jsdelivr.net/npm/jquery@4.0.0/dist/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@6.0.0/dist/echarts.min.js"></script>
+  </head>
+
+  <body>
+    <h1>PM2.5數據列表</h1>
+    <a href="/update_db">更新資料庫</a>
+    <h1>最新更新時間:{{max_date}}</h1>
+    <div id="main" style="width: 600px; height: 400px"></div>
+    <div id="county" style="width: 600px; height: 400px" hidden></div>
+    <div style="margin: 12px">
+      <label for="countySelect">選取縣市</label>
+      <select name="countySelect" id="countySelect">
+        {% for county in countys %}
+        <option value="{{county}}">{{county}}</option>
+        {% endfor %}
+      </select>
+      <button onclick="drawCountyChart()" id="loadContainer">確認</button>
+    </div>
+    <div id="tableContainer">
+      <table border="1px">
+        <thead>
+          <tr>
+            {% for column in columns %}
+            <th>{{column}}</th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for data in datas %}
+          <tr>
+            {% for item in data %}
+            <td>{{item}}</td>
+            {% endfor %}
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </body>
+  <script type="text/javascript">
+    let Chart1 = echarts.init(document.getElementById("main"));
+    let Chart2 = echarts.init(document.getElementById("county"));
+    let countyEl = document.querySelector("#county");
+    let countySelectEl = document.querySelector("#countySelect");
+
+    drawchart(Chart1, "/avg-pm25", "PM2.5數據", "countys", "avg_pm25");
+
+    function drawCountyChart() {
+      let county = countySelectEl.value;
+      countyEl.hidden = false;
+      console.log(county);
+      drawchart(
+        Chart2,
+        `/county-pm25/${county}`,
+        `${county}PM2.5數據`,
+        "site",
+        "pm25",
+      );
+    }
+
+    function drawchart(chart, url, title, xkey, ykey) {
+      $.ajax({
+        url: url,
+        type: "GET",
+        dataType: "json",
+        error: () => {
+          alert("資料載入失敗...");
+        },
+        success: (result) => {
+          console.log("資料載入成功!");
+          // 基于准备好的dom，初始化echarts实例
+
+          // 指定图表的配置项和数据
+          var option = {
+            title: {
+              text: title,
+            },
+            tooltip: {},
+            legend: {
+              data: ["PM2.5"],
+            },
+            xAxis: {
+              data: result[xkey],
+            },
+            yAxis: {},
+            series: [
+              {
+                name: "销量",
+                type: "bar",
+                data: result[ykey],
+              },
+            ],
+          };
+
+          // 使用刚指定的配置项和数据显示图表。
+          chart.setOption(option);
+        },
+      });
+    }
+  </script>
+</html>
